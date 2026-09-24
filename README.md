@@ -12,13 +12,13 @@ Qwen2.5-Omni 使用 ComfyUI 原生 Qwen 文本层及插件内的音频编码器�
 
 | 组件 | 保存位置 | 可选权重 |
 | --- | --- | --- |
-| AuK | `ComfyUI/models/diffusion_models/` | 官方 `auk_base.safetensors` 或 `auk_flash.safetensors` |
-| Qwen 编码器 | `ComfyUI/models/text_encoders/Qwen2.5-Omni-3B/` | 官方 `model-00001-of-00003.safetensors` 和 `model-00002-of-00003.safetensors` |
-| VAE | `ComfyUI/models/vae/AuK/` | 官方 `vae.safetensors` |
+| AuK | `ComfyUI/models/AuK/diffusion_models/` | 官方 `auk_base.safetensors` 或 `auk_flash.safetensors` |
+| Qwen 编码器 | `ComfyUI/models/AuK/text_encoders/Qwen2.5-Omni-3B/` | 官方 `model-00001-of-00003.safetensors` 和 `model-00002-of-00003.safetensors` |
+| VAE | `ComfyUI/models/AuK/vae/` | 官方 `vae.safetensors` |
 
-权重保存在上述 ComfyUI 模型目录，**不写入 Hugging Face 缓存目录**。官方 Qwen 的第三分片只有本插件不用的 Talker 等权重，加载节点只下载前两片中的 Thinker 文本和音频编码器。本地模型路径使用 `folder_paths`，因此可读取 `extra_model_paths.yaml` 注册的对应目录及子目录；自动下载目标使用 ComfyUI 当前 `models_dir`。配置和分词器随插件提供。
+权重保存在上述插件专用的 ComfyUI 模型目录，**不写入 Hugging Face 缓存目录，也不占用 ComfyUI 原生加载节点的模型类别**。官方 Qwen 的第三分片只有本插件不用的 Talker 等权重，加载节点只下载前两片中的 Thinker 文本和音频编码器。本地模型路径使用 `folder_paths` 专用类别 `yogurt_auk_diffusion_models`、`yogurt_auk_text_encoders`、`yogurt_auk_vae`，因此可读取 `extra_model_paths.yaml` 注册的对应目录；自动下载到该类别的第一个注册目录，未配置额外路径时为当前 ComfyUI 的 `models_dir/AuK`。配置和分词器随插件提供。
 
-如需减少磁盘和显存占用，仍可选择 [drbaph/AuK-comfyui](https://huggingface.co/drbaph/AuK-comfyui/tree/main) 发布的第三方 BF16、INT8、W4A8 转换文件：AuK 放在 `diffusion_models/`，`qwen_omni_*.safetensors` 放在 `text_encoders/`，`auk_vae.safetensors` 放在 `vae/`。选择这些文件才会从该第三方仓库下载。`precision` 只控制运算精度，量化格式从 checkpoint 读取；VAE 始终 FP32。
+如需减少磁盘和显存占用，仍可选择 [drbaph/AuK-comfyui](https://huggingface.co/drbaph/AuK-comfyui/tree/main) 发布的第三方 BF16、INT8、W4A8 转换文件：AuK 放在 `models/AuK/diffusion_models/`，`qwen_omni_*.safetensors` 放在 `models/AuK/text_encoders/`，`auk_vae.safetensors` 放在 `models/AuK/vae/`。选择这些文件才会从该第三方仓库下载。`precision` 只控制运算精度，量化格式从 checkpoint 读取；VAE 始终 FP32。
 
 ## 工作流
 

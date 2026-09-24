@@ -56,7 +56,7 @@ class AuKVAELoader(io.ComfyNode):
             display_name="Yogurt AuK VAE Loader",
             category="YogurtNodes/AuK",
             inputs=[
-                io.Combo.Input("vae_name", options=model_choices("vae"), tooltip="AuK/vae.safetensors is the official Tencent VAE; auk_vae.safetensors is a third-party copy. Always runs in fp32."),
+                io.Combo.Input("vae_name", options=model_choices("vae"), tooltip="vae.safetensors is the official Tencent VAE; auk_vae.safetensors is a third-party copy. Both belong in models/AuK/vae and run in fp32."),
                 io.Boolean.Input("download_if_missing", default=False, optional=True, tooltip="Download only the selected known checkpoint if missing. Existing local files are reused."),
             ],
             outputs=[io.Vae.Output()],

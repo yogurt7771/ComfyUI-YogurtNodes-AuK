@@ -102,7 +102,7 @@
         "Node name for S&R": "YogurtAuKVAELoader"
       },
       "widgets_values": [
-        "AuK/vae.safetensors",
+        "vae.safetensors",
         false
       ]
     },
@@ -257,7 +257,7 @@
         "Node name for S&R": "MarkdownNote"
       },
       "widgets_values": [
-        "选择三个模型；缺失时可在各加载节点打开 download_if_missing。官方 AuK/Qwen 权重直接保存到 ComfyUI models 对应目录，不使用 Hugging Face 缓存。\n\n纯文本生成需要 seconds > 0。"
+        "选择三个模型；缺失时可在各加载节点打开 download_if_missing。官方 AuK/Qwen 权重保存到 ComfyUI models/AuK 专用目录，不使用 Hugging Face 缓存。\n\n纯文本生成需要 seconds > 0。"
       ]
     }
   ],
