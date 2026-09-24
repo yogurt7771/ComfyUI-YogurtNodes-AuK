@@ -1,0 +1,11 @@
+[project]
+name = "ComfyUI-YogurtNodes-AuK"
+description = "Local AuK Base and Flash speech generation and editing with native ComfyUI model operations."
+version = "0.1.0"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+dependencies = ["tokenizers>=0.22", "safetensors"]
+
+[tool.comfy]
+DisplayName = "ComfyUI-YogurtNodes-AuK"
+Icon = ""
