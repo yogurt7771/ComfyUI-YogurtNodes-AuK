@@ -22,6 +22,7 @@ from comfy.quant_ops import QUANT_ALGOS
 from .auk_model import AuKModel
 from .auk_vae import BigVGANFlowVAE, fold_weight_norm
 from .encoder import AuKEncoder, Processor, make_encoder
+from .model_paths import ENCODER_SHARDS
 
 
 FLASH_TIMES = [0.0, 0.07612049579620361, 0.2928932309150696, 0.6173166036605835, 1.0]
@@ -85,11 +86,18 @@ def load_model(path, precision):
 def load_encoder(path, precision):
     device = mm.text_encoder_device()
     dtype = compute_dtype(precision, device)
-    state = load_file(str(path))
-    # Accept the released standalone encoder and an unsharded original Qwen checkpoint.
-    if "thinker.model.embed_tokens.weight" in state:
-        state = {key.removeprefix("thinker."): value for key, value in state.items()
-                 if key.startswith(("thinker.model.", "thinker.audio_tower.", "thinker.lm_head."))}
+    if Path(path).is_dir():
+        state = {}
+        for shard in ENCODER_SHARDS:
+            with safe_open(str(Path(path) / shard), framework="pt", device="cpu") as checkpoint:
+                for key in checkpoint.keys():
+                    if key.startswith(("thinker.model.", "thinker.audio_tower.", "thinker.lm_head.")):
+                        state[key.removeprefix("thinker.")] = checkpoint.get_tensor(key)
+    else:
+        state = load_file(str(path))
+        if "thinker.model.embed_tokens.weight" in state:
+            state = {key.removeprefix("thinker."): value for key, value in state.items()
+                     if key.startswith(("thinker.model.", "thinker.audio_tower.", "thinker.lm_head."))}
     has_lm_head = "lm_head.weight" in state
     model = make_encoder(ENCODER_ASSETS, operations(state, dtype), dtype, has_lm_head)
     model.load_state_dict(state, strict=True)

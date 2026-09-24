@@ -10,32 +10,39 @@ import comfy.model_management as mm
 import comfy.utils
 
 
-REPOSITORY = "https://huggingface.co/drbaph/AuK-comfyui/resolve/main"
-MODELS = {
-    "diffusion_models": [f"auk_{variant}_{precision}.safetensors" for variant in ("base", "flash") for precision in ("bf16", "fp32", "int8", "w4a8")],
-    "text_encoders": [f"qwen_omni_{precision}.safetensors" for precision in ("bf16", "int8", "w4a8")],
-    "vae": ["auk_vae.safetensors"],
+OFFICIAL_ENCODER = "Qwen2.5-Omni-3B"
+ENCODER_SHARDS = ("model-00001-of-00003.safetensors", "model-00002-of-00003.safetensors")
+SOURCES = {
+    ("diffusion_models", "auk_base.safetensors"): ("tencent/AuK", "auk_base.safetensors"),
+    ("diffusion_models", "auk_flash.safetensors"): ("tencent/AuK-Flash", "auk_flash.safetensors"),
+    ("vae", "AuK/vae.safetensors"): ("tencent/AuK", "vae.safetensors"),
 }
+for variant in ("base", "flash"):
+    for precision in ("bf16", "fp32", "int8", "w4a8"):
+        name = f"auk_{variant}_{precision}.safetensors"
+        SOURCES["diffusion_models", name] = ("drbaph/AuK-comfyui", f"diffusion_models/{name}")
+for precision in ("bf16", "int8", "w4a8"):
+    name = f"qwen_omni_{precision}.safetensors"
+    SOURCES["text_encoders", name] = ("drbaph/AuK-comfyui", f"text_encoders/{name}")
+SOURCES["vae", "auk_vae.safetensors"] = ("drbaph/AuK-comfyui", "vae/auk_vae.safetensors")
 
 
 def model_choices(category):
-    return list(dict.fromkeys(MODELS[category] + folder_paths.get_filename_list(category)))
+    known = [name for kind, name in SOURCES if kind == category]
+    if category == "text_encoders":
+        known.insert(0, OFFICIAL_ENCODER)
+    available = folder_paths.get_filename_list(category)
+    if category == "text_encoders":
+        available = [name for name in available if not name.replace("\\", "/").startswith(f"{OFFICIAL_ENCODER}/")]
+    return list(dict.fromkeys(known + available))
 
 
-def model_path(category, name, download_if_missing=False):
-    existing = folder_paths.get_full_path(category, name)
-    if existing is not None:
-        return existing
-    if not download_if_missing:
-        raise FileNotFoundError(f"AuK checkpoint not found: {name}. Put it in models/{category} or enable download_if_missing.")
-    if name not in MODELS[category]:
-        raise ValueError(f"No download is configured for {name}; install this local checkpoint yourself.")
-    target = Path(folder_paths.models_dir) / category / name
+def download(target, repository, filename):
     target.parent.mkdir(parents=True, exist_ok=True)
-    # A failed/interrupted transfer must never become a selectable checkpoint.
-    descriptor, partial = tempfile.mkstemp(prefix=f".{name}.", suffix=".part", dir=target.parent)
+    descriptor, partial = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".part", dir=target.parent)
     try:
-        with os.fdopen(descriptor, "wb") as output, urllib.request.urlopen(f"{REPOSITORY}/{category}/{name}", timeout=60) as response:
+        url = f"https://huggingface.co/{repository}/resolve/main/{filename}"
+        with os.fdopen(descriptor, "wb") as output, urllib.request.urlopen(url, timeout=60) as response:
             expected = int(response.headers.get("Content-Length", 0))
             progress = comfy.utils.ProgressBar(max(expected, 1))
             received = 0
@@ -53,4 +60,30 @@ def model_path(category, name, download_if_missing=False):
             os.replace(partial, target)
     finally:
         Path(partial).unlink(missing_ok=True)
+
+
+def model_path(category, name, download_if_missing=False):
+    if category == "text_encoders" and name == OFFICIAL_ENCODER:
+        for root in folder_paths.get_folder_paths(category):
+            directory = Path(root) / OFFICIAL_ENCODER
+            if all((directory / shard).is_file() for shard in ENCODER_SHARDS):
+                return str(directory)
+        if not download_if_missing:
+            raise FileNotFoundError(f"Official Qwen encoder is missing. Put both model shards in models/{category}/{OFFICIAL_ENCODER} or enable download_if_missing.")
+        directory = Path(folder_paths.models_dir) / category / OFFICIAL_ENCODER
+        for shard in ENCODER_SHARDS:
+            if not (directory / shard).is_file():
+                download(directory / shard, "Qwen/Qwen2.5-Omni-3B", shard)
+        return str(directory)
+
+    existing = folder_paths.get_full_path(category, name)
+    if existing is not None:
+        return existing
+    if not download_if_missing:
+        raise FileNotFoundError(f"AuK checkpoint not found: {name}. Put it in models/{category} or enable download_if_missing.")
+    source = SOURCES.get((category, name))
+    if source is None:
+        raise ValueError(f"No download is configured for {name}; install this local checkpoint yourself.")
+    target = Path(folder_paths.models_dir) / category / name
+    download(target, *source)
     return str(target)

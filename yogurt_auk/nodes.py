@@ -16,7 +16,7 @@ class AuKModelLoader(io.ComfyNode):
             display_name="Yogurt AuK Model Loader",
             category="YogurtNodes/AuK",
             inputs=[
-                io.Combo.Input("model_name", options=model_choices("diffusion_models"), tooltip="Converted AuK checkpoint. Base = full quality, Flash = distilled 4-step. The file suffix sets the weight format: bf16 (baseline), int8 or w4a8 (smaller, less VRAM)."),
+                io.Combo.Input("model_name", options=model_choices("diffusion_models"), tooltip="Official Tencent AuK Base / Flash are listed first. The suffixed BF16 / INT8 / W4A8 files are third-party ComfyUI conversions."),
                 io.Combo.Input("precision", options=["auto", "bf16", "fp32"], tooltip="Compute precision. auto = bf16 on GPU, fp32 on CPU. The weight format (bf16/int8/w4a8) is read from the checkpoint itself, not from this setting."),
                 io.Boolean.Input("download_if_missing", default=False, optional=True, tooltip="Download only the selected known checkpoint if missing. Existing local files are reused."),
             ],
@@ -36,7 +36,7 @@ class AuKEncoderLoader(io.ComfyNode):
             display_name="Yogurt AuK Encoder Loader",
             category="YogurtNodes/AuK",
             inputs=[
-                io.Combo.Input("encoder_name", options=model_choices("text_encoders"), tooltip="Converted Qwen2.5-Omni text/audio encoder. Tokenizer and architecture are bundled in this plugin. One encoder can feed any number of AuK models."),
+                io.Combo.Input("encoder_name", options=model_choices("text_encoders"), tooltip="Qwen2.5-Omni-3B uses the first two official Qwen shards; qwen_omni_* files are third-party converted encoders."),
                 io.Combo.Input("precision", options=["auto", "bf16", "fp32"], tooltip="Compute precision for the encoder. auto = bf16 on GPU, fp32 on CPU. Weight format (bf16/int8/w4a8) comes from the checkpoint."),
                 io.Boolean.Input("download_if_missing", default=False, optional=True, tooltip="Download only the selected known checkpoint if missing. Existing local files are reused."),
             ],
@@ -56,7 +56,7 @@ class AuKVAELoader(io.ComfyNode):
             display_name="Yogurt AuK VAE Loader",
             category="YogurtNodes/AuK",
             inputs=[
-                io.Combo.Input("vae_name", options=model_choices("vae"), tooltip="Original unquantized AuK VAE (auk_vae). Always runs in fp32; decoding through it preserves AuK's volume edits."),
+                io.Combo.Input("vae_name", options=model_choices("vae"), tooltip="AuK/vae.safetensors is the official Tencent VAE; auk_vae.safetensors is a third-party copy. Always runs in fp32."),
                 io.Boolean.Input("download_if_missing", default=False, optional=True, tooltip="Download only the selected known checkpoint if missing. Existing local files are reused."),
             ],
             outputs=[io.Vae.Output()],
